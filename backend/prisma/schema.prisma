@@ -1,0 +1,207 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  passwordHash String        @map("password_hash")
+  fullName     String        @map("full_name")
+  preferences  Json?         @default("{}")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  goals        Goal[]
+  quizAttempts QuizAttempt[]
+
+  @@map("users")
+}
+
+model Goal {
+  id                     String            @id @default(uuid())
+  userId                 String            @map("user_id")
+  title                  String
+  category               String            // e.g. "DSA", "WebDev", "MachineLearning", "Custom"
+  targetDeadline         DateTime          @map("target_deadline")
+  proficiencyLevel       String            @default("Beginner") @map("proficiency_level") // Beginner, Intermediate, Advanced
+  weeklyAvailability     Json              @map("weekly_availability") // { "Monday": 2.5, "Tuesday": 2.0, ... }
+  preferredStudyTime     String            @default("Evening") @map("preferred_study_time") // Morning, Afternoon, Evening, Custom
+  learningPreference     String            @default("Balanced") @map("learning_preference") // Practice, Theory, Balanced
+  revisionFrequencyDays  Int               @default(7) @map("revision_frequency_days")
+  bufferDays             Int               @default(3) @map("buffer_days")
+  status                 String            @default("Active") // Active, Completed, Paused, Archived
+  createdAt              DateTime          @default(now()) @map("created_at")
+  updatedAt              DateTime          @updatedAt @map("updated_at")
+
+  user                   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customSyllabus         CustomSyllabus?
+  topics                 Topic[]
+  studyPlans             StudyPlan[]
+
+  @@map("goals")
+}
+
+model CustomSyllabus {
+  id            String    @id @default(uuid())
+  goalId        String    @unique @map("goal_id")
+  rawFileName   String?   @map("raw_file_name")
+  fileType      String    @map("file_type") // "pdf", "docx", "text"
+  rawText       String?   @db.Text @map("raw_text")
+  extractedData Json?     @map("extracted_data") // Structured parsed syllabus
+  status        String    @default("Pending") // Pending, Parsed, Confirmed, Failed
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  goal          Goal      @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@map("custom_syllabi")
+}
+
+model Topic {
+  id                   String            @id @default(uuid())
+  goalId               String            @map("goal_id")
+  unitName             String            @default("General") @map("unit_name")
+  title                String
+  description          String?           @db.Text
+  difficultyLevel      Int               @default(3) @map("difficulty_level") // 1 to 5
+  baseEstimatedMinutes Int               @default(60) @map("base_estimated_minutes")
+  orderIndex           Int               @default(0) @map("order_index")
+  userConfidenceScore  Int               @default(3) @map("user_confidence_score") // 1=Very Weak, 5=Strong
+  calculatedPriority   Float             @default(1.0) @map("calculated_priority")
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @updatedAt @map("updated_at")
+
+  goal                 Goal              @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  studyTasks           StudyTask[]
+  quizzes              Quiz[]
+  
+  // Topic Dependencies
+  dependencies         TopicDependency[] @relation("DependentTopic")
+  prerequisites        TopicDependency[] @relation("PrerequisiteTopic")
+
+  @@map("topics")
+}
+
+model TopicDependency {
+  id                  String   @id @default(uuid())
+  topicId             String   @map("topic_id")
+  prerequisiteTopicId String   @map("prerequisite_topic_id")
+  isStrict            Boolean  @default(true) @map("is_strict")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  topic               Topic    @relation("DependentTopic", fields: [topicId], references: [id], onDelete: Cascade)
+  prerequisiteTopic   Topic    @relation("PrerequisiteTopic", fields: [prerequisiteTopicId], references: [id], onDelete: Cascade)
+
+  @@unique([topicId, prerequisiteTopicId])
+  @@map("topic_dependencies")
+}
+
+model StudyPlan {
+  id                   String              @id @default(uuid())
+  goalId               String              @map("goal_id")
+  planVersion          Int                 @default(1) @map("plan_version")
+  isActive             Boolean             @default(true) @map("is_active")
+  schedulingParameters Json                @map("scheduling_parameters")
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedAt            DateTime            @updatedAt @map("updated_at")
+
+  goal                 Goal                @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  tasks                StudyTask[]
+  scheduleChanges      ScheduleChange[]
+  whatIfSimulations    WhatIfSimulation[]
+
+  @@map("study_plans")
+}
+
+model StudyTask {
+  id              String         @id @default(uuid())
+  studyPlanId     String         @map("study_plan_id")
+  topicId         String         @map("topic_id")
+  scheduledDate   DateTime       @map("scheduled_date") @db.Date
+  startTime       String?        @map("start_time") // e.g. "18:00"
+  endTime         String?        @map("end_time")   // e.g. "19:00"
+  durationMinutes Int            @map("duration_minutes")
+  taskType        String         @default("Study") @map("task_type") // "Study", "Practice", "Revision", "Quiz"
+  status          String         @default("Not Started") @map("status") // "Not Started", "In Progress", "Completed", "Skipped"
+  orderInDay      Int            @default(0) @map("order_in_day")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  studyPlan       StudyPlan      @relation(fields: [studyPlanId], references: [id], onDelete: Cascade)
+  topic           Topic          @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  progress        TaskProgress?
+
+  @@map("study_tasks")
+}
+
+model TaskProgress {
+  id                 String    @id @default(uuid())
+  studyTaskId        String    @unique @map("study_task_id")
+  actualMinutesSpent Int       @default(0) @map("actual_minutes_spent")
+  completionStatus   String    @default("Completed") @map("completion_status")
+  notes              String?   @db.Text
+  completedAt        DateTime  @default(now()) @map("completed_at")
+
+  studyTask          StudyTask @relation(fields: [studyTaskId], references: [id], onDelete: Cascade)
+
+  @@map("task_progress")
+}
+
+model Quiz {
+  id             String        @id @default(uuid())
+  topicId        String        @map("topic_id")
+  title          String
+  questions      Json          // Array of { question, options, correct_index, explanation }
+  totalQuestions Int           @map("total_questions")
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  topic          Topic         @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  attempts       QuizAttempt[]
+
+  @@map("quizzes")
+}
+
+model QuizAttempt {
+  id          String   @id @default(uuid())
+  quizId      String   @map("quiz_id")
+  userId      String   @map("user_id")
+  score       Int
+  maxScore    Int      @map("max_score")
+  userAnswers Json     @map("user_answers")
+  feedback    Json?    // Detailed question-by-question diagnostic
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("quiz_attempts")
+}
+
+model ScheduleChange {
+  id            String    @id @default(uuid())
+  studyPlanId   String    @map("study_plan_id")
+  reason        String    // e.g. "Missed Day Reschedule", "Deadline Extended", "User Manual Shift"
+  changeSummary Json      @map("change_summary") // Diff of tasks affected, time redistributed
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  studyPlan     StudyPlan @relation(fields: [studyPlanId], references: [id], onDelete: Cascade)
+
+  @@map("schedule_changes")
+}
+
+model WhatIfSimulation {
+  id                  String    @id @default(uuid())
+  studyPlanId         String    @map("study_plan_id")
+  simulatedParameters Json      @map("simulated_parameters")
+  simulationResult    Json      @map("simulation_result")
+  appliedToRealPlan   Boolean   @default(false) @map("applied_to_real_plan")
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  studyPlan           StudyPlan @relation(fields: [studyPlanId], references: [id], onDelete: Cascade)
+
+  @@map("what_if_simulations")
+}
