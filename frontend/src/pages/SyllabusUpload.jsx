@@ -22,7 +22,12 @@ export default function SyllabusUpload() {
   const [rawText, setRawText] = useState('');
   const [courseName, setCourseName] = useState('Custom Curriculum');
   const [extracting, setExtracting] = useState(false);
-  const [extractedData, setExtractedData] = useState(null);
+  const [startDate, setStartDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [targetDeadline, setTargetDeadline] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 45);
+    return d.toISOString().split('T')[0];
+  });
   const [error, setError] = useState(null);
   const [scheduling, setScheduling] = useState(false);
 
@@ -97,14 +102,11 @@ export default function SyllabusUpload() {
     if (!extractedData || extractedData.topics.length === 0) return;
     setScheduling(true);
     try {
-      const deadline = new Date();
-      deadline.setDate(deadline.getDate() + 45);
-
       // Create goal with extracted verified curriculum
       const goalPayload = {
         title: extractedData.course_title || courseName,
         category: 'Custom',
-        targetDeadline: deadline.toISOString().split('T')[0],
+        targetDeadline: targetDeadline,
         proficiencyLevel: 'Beginner',
         weeklyAvailability: {
           Monday: 2.0, Tuesday: 2.0, Wednesday: 2.0,
@@ -125,7 +127,7 @@ export default function SyllabusUpload() {
       };
 
       const createdGoal = await goalService.createGoal(goalPayload);
-      await planService.generatePlan(createdGoal.id, new Date().toISOString().split('T')[0]);
+      await planService.generatePlan(createdGoal.id, startDate);
 
       navigate('/schedule');
     } catch (err) {

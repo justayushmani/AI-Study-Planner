@@ -9,7 +9,7 @@ const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 // Generate a study plan for a given goal
 router.post('/generate', authenticate, async (req, res) => {
   try {
-    const { goalId, startDate } = req.body;
+    const { goalId, startDate, blackoutDates } = req.body;
     if (!goalId) {
       return res.status(400).json({ error: 'goalId is required' });
     }
@@ -63,12 +63,13 @@ router.post('/generate', authenticate, async (req, res) => {
         buffer_days: goal.bufferDays,
         revision_frequency_days: goal.revisionFrequencyDays,
         session_chunk_minutes: 45,
-        include_quizzes: true
+        include_quizzes: true,
+        blackout_dates: Array.isArray(blackoutDates) ? blackoutDates : []
       }
     };
 
     // Call FastAPI deterministic planner
-    const aiResponse = await axios.post(`${AI_SERVICE_URL}/schedule/generate`, schedulerPayload);
+    const aiResponse = await axios.post(`${AI_SERVICE_URL}/schedule/generate`, schedulerPayload, { timeout: 120000 });
     const planResult = aiResponse.data;
 
     // Save in database inside transaction
@@ -88,7 +89,9 @@ router.post('/generate', authenticate, async (req, res) => {
           stats: planResult.stats,
           buffer_dates: planResult.buffer_dates,
           is_feasible: planResult.is_feasible,
-          warnings: planResult.warnings
+          warnings: planResult.warnings,
+          suggestions: planResult.suggestions || [],
+          startDate: formattedStart
         }
       }
     });
@@ -124,6 +127,7 @@ router.post('/generate', authenticate, async (req, res) => {
     res.status(201).json({
       plan: completePlan,
       warnings: planResult.warnings,
+      suggestions: planResult.suggestions || [],
       isFeasible: planResult.is_feasible,
       stats: planResult.stats
     });
@@ -166,9 +170,17 @@ router.get('/goal/:goalId', authenticate, async (req, res) => {
   }
 });
 
-// Intelligent Rescheduling after missed days
+// Intelligent Rescheduling after missed days, vacations, or pace adjustments
 router.post('/:id/reschedule', authenticate, async (req, res) => {
   try {
+    const { 
+      today, 
+      reason = 'Dynamic Schedule Redistribution',
+      blackoutDates = [],
+      missedTaskIds = [],
+      adjustedDailyHoursIncrease = 0.0
+    } = req.body;
+
     const plan = await prisma.studyPlan.findFirst({
       where: { id: req.params.id, goal: { userId: req.user.id } },
       include: {
@@ -185,7 +197,7 @@ router.post('/:id/reschedule', authenticate, async (req, res) => {
       return res.status(404).json({ error: 'Study plan not found' });
     }
 
-    const todayStr = (req.body.today || new Date().toISOString().split('T')[0]);
+    const todayStr = (today || new Date().toISOString().split('T')[0]);
 
     // Format tasks for Python rescheduler
     const existingTasksPayload = plan.tasks.map(t => ({
@@ -213,16 +225,25 @@ router.post('/:id/reschedule', authenticate, async (req, res) => {
       prerequisites: t.dependencies.map(d => d.prerequisiteTopicId)
     }));
 
+    const allMissedIds = [
+      ...plan.tasks.filter(t => t.status !== 'Completed' && t.scheduledDate.toISOString().split('T')[0] <= todayStr).map(t => t.id),
+      ...(Array.isArray(missedTaskIds) ? missedTaskIds : [])
+    ];
+    const uniqueMissedIds = Array.from(new Set(allMissedIds));
+
     const reschedulePayload = {
       today: todayStr,
       deadline: plan.goal.targetDeadline.toISOString().split('T')[0],
       weekly_hours: plan.goal.weeklyAvailability,
       completed_task_ids: plan.tasks.filter(t => t.status === 'Completed').map(t => t.id),
-      missed_task_ids: plan.tasks.filter(t => t.status !== 'Completed' && t.scheduledDate.toISOString().split('T')[0] <= todayStr).map(t => t.id),
+      missed_task_ids: uniqueMissedIds,
       existing_tasks: existingTasksPayload,
       all_topics: allTopicsPayload,
       buffer_days: plan.goal.bufferDays,
-      preferred_study_time: plan.goal.preferredStudyTime
+      preferred_study_time: plan.goal.preferredStudyTime,
+      blackout_dates: Array.isArray(blackoutDates) ? blackoutDates : [],
+      adjusted_daily_hours_increase: parseFloat(adjustedDailyHoursIncrease) || 0.0,
+      reason
     };
 
     const aiRes = await axios.post(`${AI_SERVICE_URL}/schedule/reschedule`, reschedulePayload);
@@ -260,15 +281,25 @@ router.post('/:id/reschedule', authenticate, async (req, res) => {
       await tx.scheduleChange.create({
         data: {
           studyPlanId: plan.id,
-          reason: 'Missed-day dynamic redistribution',
+          reason: reason || 'Dynamic schedule redistribution',
           changeSummary: diff
         }
       });
 
-      // 4. Increment plan version
+      // 4. Increment plan version and update parameters
       await tx.studyPlan.update({
         where: { id: plan.id },
-        data: { planVersion: { increment: 1 } }
+        data: { 
+          planVersion: { increment: 1 },
+          schedulingParameters: {
+            ...plan.schedulingParameters,
+            stats: newResult.stats,
+            buffer_dates: newResult.buffer_dates,
+            is_feasible: newResult.is_feasible,
+            warnings: newResult.warnings,
+            suggestions: newResult.suggestions || []
+          }
+        }
       });
     });
 
@@ -285,7 +316,8 @@ router.post('/:id/reschedule', authenticate, async (req, res) => {
 
     res.json({
       plan: updatedPlan,
-      diff
+      diff,
+      suggestions: newResult.suggestions || []
     });
   } catch (err) {
     console.error('Reschedule error:', err.response?.data || err.message);

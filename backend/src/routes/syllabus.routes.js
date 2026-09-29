@@ -23,7 +23,7 @@ router.post('/extract-file', authenticate, upload.single('file'), async (req, re
 
     const aiResponse = await axios.post(`${AI_SERVICE_URL}/extract/file`, formData, {
       headers: formData.getHeaders(),
-      timeout: 60000,
+      timeout: 120000,
     });
 
     res.json(aiResponse.data);
@@ -45,7 +45,7 @@ router.post('/extract-text', authenticate, async (req, res) => {
     const aiResponse = await axios.post(
       `${AI_SERVICE_URL}/extract/text`,
       { raw_text: rawText, course_name: courseName || 'Custom Course' },
-      { timeout: 60000 }
+      { timeout: 120000 }
     );
 
     res.json(aiResponse.data);

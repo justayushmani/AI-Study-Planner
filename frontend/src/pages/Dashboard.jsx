@@ -42,11 +42,56 @@ export default function Dashboard({ onOpenAssistant }) {
   }, []);
 
   const handleTaskStatus = async (taskId, newStatus) => {
+    // 1. Instant 0ms optimistic UI update
+    const previousData = data;
+    setData((prev) => {
+      if (!prev) return prev;
+      const updateList = (list) =>
+        (list || []).map((t) => (t.id === taskId ? { ...t, status: newStatus } : t));
+
+      const updatedToday = updateList(prev.todayTasks);
+      const updatedUpcoming = updateList(prev.upcomingTasks);
+      const allTasks = [...updatedToday, ...updatedUpcoming];
+      const completedTasks = allTasks.filter((t) => t.status === 'Completed').length;
+      const totalTasks = allTasks.length;
+      const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+      const completedMinutes = allTasks
+        .filter((t) => t.status === 'Completed')
+        .reduce((s, t) => s + (t.durationMinutes || 0), 0);
+      const completedHours = Number(Math.round(completedMinutes / 60.0 + 'e1') + 'e-1');
+
+      const todayIso = new Date().toISOString().split('T')[0];
+      const missedTasksCount = allTasks.filter(
+        (t) => t.status !== 'Completed' && (t.scheduledDate || '').split('T')[0] < todayIso
+      ).length;
+      const isCompletedToday = updatedToday.some((t) => t.status === 'Completed');
+
+      return {
+        ...prev,
+        todayTasks: updatedToday,
+        upcomingTasks: updatedUpcoming,
+        progress: {
+          ...prev.progress,
+          completedTasks,
+          totalTasks,
+          percentage,
+          completedHours,
+          missedTasksCount,
+          isCompletedToday,
+          streakDays: isCompletedToday && (prev.progress?.streakDays === 0 || !prev.progress?.streakDays)
+            ? 1
+            : (prev.progress?.streakDays || 0)
+        }
+      };
+    });
+
+    // 2. Perform backend API call in background
     try {
       await taskService.updateStatus(taskId, newStatus);
-      fetchDashboard();
     } catch (err) {
       console.error('Failed to update task:', err);
+      // Revert on error
+      setData(previousData);
     }
   };
 
@@ -223,13 +268,17 @@ export default function Dashboard({ onOpenAssistant }) {
         
         <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Study Streak</span>
-            <Flame className="w-4 h-4 text-amber-400" />
+            <span className="text-xs font-medium text-slate-400">Real Study Streak</span>
+            <Flame className={`w-4 h-4 ${progress.streakDays > 0 ? 'text-amber-400 fill-amber-400' : 'text-slate-500'}`} />
           </div>
           <div className="text-2xl font-bold text-slate-100 font-mono">
             {progress.streakDays} <span className="text-xs font-sans text-slate-400 font-normal">days</span>
           </div>
-          <p className="text-[11px] text-emerald-400">Consistent learning pace</p>
+          <p className={`text-[11px] ${progress.streakDays > 0 ? (progress.isCompletedToday ? 'text-emerald-400' : 'text-amber-400') : 'text-slate-500'}`}>
+            {progress.streakDays > 0 
+              ? (progress.isCompletedToday ? '✓ Done for today!' : 'Pending today\'s session') 
+              : 'Complete a task to start streak'}
+          </p>
         </div>
 
         <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-2">

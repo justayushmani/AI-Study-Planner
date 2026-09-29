@@ -9,6 +9,8 @@ import Onboarding from './pages/Onboarding';
 import SyllabusUpload from './pages/SyllabusUpload';
 import WhatIfSimulator from './pages/WhatIfSimulator';
 import QuizView from './pages/QuizView';
+import Login from './pages/Login';
+import Register from './pages/Register';
 
 export default function App() {
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
@@ -27,6 +29,8 @@ export default function App() {
               <Route path="/syllabus" element={<SyllabusUpload />} />
               <Route path="/what-if" element={<WhatIfSimulator />} />
               <Route path="/quiz/:topicId" element={<QuizView />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
             </Routes>
           </main>
 

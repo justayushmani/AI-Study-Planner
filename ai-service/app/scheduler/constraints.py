@@ -18,14 +18,19 @@ class ConstraintManager:
     @staticmethod
     def calculate_available_minutes_per_day(
         calendar_days: List[date],
-        availability: AvailabilityInput
+        availability: AvailabilityInput,
+        blackout_dates: List[date] = None
     ) -> Dict[date, int]:
         """
         Maps each calendar day to user-allowed available study minutes.
-        Caps at availability.max_daily_minutes_cap.
+        Zeros out capacity for blackout/vacation dates and caps at availability.max_daily_minutes_cap.
         """
+        blackout_set = set(blackout_dates or [])
         daily_capacity = {}
         for d in calendar_days:
+            if d in blackout_set:
+                daily_capacity[d] = 0
+                continue
             day_name = DAY_NAMES[d.weekday()]
             hours = availability.weekly_hours.get(day_name, 0.0)
             minutes = min(int(hours * 60), availability.max_daily_minutes_cap)

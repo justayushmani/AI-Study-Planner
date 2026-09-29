@@ -101,7 +101,69 @@ router.get('/dashboard', authenticate, async (req, res) => {
       .filter(t => t.taskType === 'Revision' && t.scheduledDate >= startOfToday)
       .slice(0, 4);
 
-    // 8. Workload velocity (daily completed vs planned for last 7 days)
+    // 8. Calculate real authentic streak data
+    const completedProgressRecords = await prisma.taskProgress.findMany({
+      where: {
+        completionStatus: 'Completed',
+        studyTask: {
+          studyPlan: {
+            goal: { userId }
+          }
+        }
+      },
+      select: { completedAt: true, studyTask: { select: { scheduledDate: true } } }
+    });
+
+    const completedDateStrings = new Set();
+    completedProgressRecords.forEach(cp => {
+      if (cp.completedAt) {
+        completedDateStrings.add(new Date(cp.completedAt).toISOString().split('T')[0]);
+      } else if (cp.studyTask?.scheduledDate) {
+        completedDateStrings.add(new Date(cp.studyTask.scheduledDate).toISOString().split('T')[0]);
+      }
+    });
+
+    const directCompletedTasks = allPlanTasks.filter(t => t.status === 'Completed');
+    directCompletedTasks.forEach(t => {
+      if (t.scheduledDate) {
+        completedDateStrings.add(new Date(t.scheduledDate).toISOString().split('T')[0]);
+      }
+    });
+
+    const todayDate = new Date();
+    const todayStr = todayDate.toISOString().split('T')[0];
+    const yesterdayDate = new Date(todayDate);
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
+
+    let currentStreak = 0;
+    const isCompletedToday = completedDateStrings.has(todayStr);
+
+    if (isCompletedToday) {
+      let cursor = new Date(todayDate);
+      while (true) {
+        const dStr = cursor.toISOString().split('T')[0];
+        if (completedDateStrings.has(dStr)) {
+          currentStreak++;
+          cursor.setDate(cursor.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+    } else if (completedDateStrings.has(yesterdayStr)) {
+      let cursor = new Date(yesterdayDate);
+      while (true) {
+        const dStr = cursor.toISOString().split('T')[0];
+        if (completedDateStrings.has(dStr)) {
+          currentStreak++;
+          cursor.setDate(cursor.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+    }
+
+    // 9. Workload velocity (daily completed vs planned for last 7 days)
     const past7Days = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
@@ -126,14 +188,19 @@ router.get('/dashboard', authenticate, async (req, res) => {
         proficiencyLevel: activeGoal.proficiencyLevel,
         totalTopics: activeGoal.topics.length
       },
-      plan: activePlan ? { id: activePlan.id, version: activePlan.planVersion } : null,
+      plan: activePlan ? { 
+        id: activePlan.id, 
+        version: activePlan.planVersion,
+        schedulingParameters: activePlan.schedulingParameters
+      } : null,
       progress: {
         percentage: progressPercentage,
         completedTasks,
         totalTasks,
         completedHours,
         missedTasksCount: missedTasks.length,
-        streakDays: Math.min(completedTasks, 5) // Estimated active study streak
+        streakDays: currentStreak,
+        isCompletedToday
       },
       todayTasks,
       upcomingTasks,

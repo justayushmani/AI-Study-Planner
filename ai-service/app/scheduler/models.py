@@ -36,6 +36,7 @@ class PlanConstraints(BaseModel):
     session_chunk_minutes: int = 45
     break_chunk_minutes: int = 15
     include_quizzes: bool = True
+    blackout_dates: List[date] = Field(default_factory=list) # Vacation / family leave days
 
 class ScheduledTask(BaseModel):
     id: str
@@ -59,6 +60,7 @@ class ScheduleResult(BaseModel):
     tasks: List[ScheduledTask]
     warnings: List[str] = Field(default_factory=list)
     stats: Dict[str, float] = Field(default_factory=dict)
+    suggestions: List[str] = Field(default_factory=list)
 
 class RescheduleRequest(BaseModel):
     today: date
@@ -70,6 +72,9 @@ class RescheduleRequest(BaseModel):
     all_topics: List[TopicInput]
     buffer_days: int = 3
     preferred_study_time: str = "Evening"
+    blackout_dates: List[date] = Field(default_factory=list) # e.g. vacation dates
+    adjusted_daily_hours_increase: float = 0.0 # user accepted pace increase in hours/day
+    reason: Optional[str] = "Dynamic Reschedule"
 
 class WhatIfRequest(BaseModel):
     today: date
@@ -77,6 +82,7 @@ class WhatIfRequest(BaseModel):
     hypothetical_deadline: Optional[date] = None
     hypothetical_weekly_hours: Optional[Dict[str, float]] = None
     hypothetical_buffer_days: Optional[int] = None
+    blackout_dates: List[date] = Field(default_factory=list)
     existing_tasks: List[ScheduledTask]
     all_topics: List[TopicInput]
 

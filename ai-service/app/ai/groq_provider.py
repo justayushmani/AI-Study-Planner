@@ -2,6 +2,7 @@ import os
 import json
 import logging
 from typing import Dict, Any, List, Type
+from dotenv import load_dotenv
 from pydantic import BaseModel
 from groq import AsyncGroq
 from .base import BaseLLMProvider
@@ -10,12 +11,13 @@ from .schemas import (
     QuizGenerationResult, QuizQuestion, AssistantResponse
 )
 
+load_dotenv()
 logger = logging.getLogger("ai_service.groq")
 
 class GroqLLMProvider(BaseLLMProvider):
     def __init__(self):
         self.api_key = os.getenv("GROQ_API_KEY", "").strip()
-        # Default user requested model: GPT OSS 120B / or fallback to llama-3.3-70b-versatile
+        # Default user requested model: GPT OSS 120B / or fallback to openai/gpt-oss-20b
         self.model_name = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
         if self.api_key and self.api_key != "your_groq_api_key_here":
             self.client = AsyncGroq(api_key=self.api_key)
@@ -44,15 +46,16 @@ class GroqLLMProvider(BaseLLMProvider):
                 ],
                 response_format={"type": "json_object"},
                 temperature=0.2,
+                timeout=45.0,
             )
             raw_content = response.choices[0].message.content or "{}"
             parsed_json = json.loads(raw_content)
             return response_model.model_validate(parsed_json)
         except Exception as e:
             logger.error(f"Error calling Groq API ({self.model_name}): {e}. Attempting fallback...")
-            # If specified model ID had error (e.g. model not available on endpoint), try llama-3.3-70b-versatile as fallback
+            # If specified model had error, try openai/gpt-oss-20b as fast fallback
             try:
-                fallback_model = "llama-3.3-70b-versatile"
+                fallback_model = "openai/gpt-oss-20b"
                 response = await self.client.chat.completions.create(
                     model=fallback_model,
                     messages=[
@@ -61,6 +64,7 @@ class GroqLLMProvider(BaseLLMProvider):
                     ],
                     response_format={"type": "json_object"},
                     temperature=0.2,
+                    timeout=30.0,
                 )
                 raw_content = response.choices[0].message.content or "{}"
                 return response_model.model_validate(json.loads(raw_content))

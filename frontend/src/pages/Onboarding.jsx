@@ -26,6 +26,8 @@ export default function Onboarding() {
   // Form State
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Coding');
+  const [startDate, setStartDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [startMode, setStartMode] = useState('today');
   const [deadline, setDeadline] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 45); // default 45 days in future
@@ -36,6 +38,22 @@ export default function Onboarding() {
   const [learningPreference, setLearningPreference] = useState('Balanced');
   const [revisionFrequencyDays, setRevisionFrequencyDays] = useState(7);
   const [bufferDays, setBufferDays] = useState(3);
+
+  const handleStartModeChange = (mode) => {
+    setStartMode(mode);
+    const d = new Date();
+    if (mode === 'today') {
+      setStartDate(d.toISOString().split('T')[0]);
+    } else if (mode === 'tomorrow') {
+      d.setDate(d.getDate() + 1);
+      setStartDate(d.toISOString().split('T')[0]);
+    } else if (mode === 'next_monday') {
+      const day = d.getDay();
+      const diff = (7 - day + 1) % 7 || 7; // days until next Monday
+      d.setDate(d.getDate() + diff);
+      setStartDate(d.toISOString().split('T')[0]);
+    }
+  };
 
   // Weekly hours map
   const [weeklyHours, setWeeklyHours] = useState({
@@ -120,7 +138,7 @@ export default function Onboarding() {
       const createdGoal = await goalService.createGoal(goalPayload);
 
       // 2. Generate Plan with Deterministic Scheduler
-      await planService.generatePlan(createdGoal.id, new Date().toISOString().split('T')[0]);
+      await planService.generatePlan(createdGoal.id, startDate);
 
       navigate('/schedule');
     } catch (err) {
@@ -239,25 +257,69 @@ export default function Onboarding() {
           <div>
             <h3 className="text-xl font-bold text-slate-100">When and how much can you study?</h3>
             <p className="text-xs text-slate-400 mt-1">
-              The deterministic engine will pack topics into your designated daily hours and protect buffer days.
+              Specify when to start your preparation, your target deadline, and daily available study hours.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
-              <label className="block text-xs font-semibold text-slate-300">Target Completion Deadline</label>
-              <input
-                type="date"
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
-              />
-              <p className="text-[11px] text-slate-500">
-                The scheduler calculates total required hours against this cutoff.
-              </p>
+              
+              {/* Preparation Start Date */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-200 mb-2">When do you want to start preparation?</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
+                  {[
+                    { id: 'today', label: 'Today', icon: '⚡' },
+                    { id: 'tomorrow', label: 'Tomorrow', icon: '🌅' },
+                    { id: 'next_monday', label: 'Next Monday', icon: '📅' },
+                    { id: 'custom', label: 'Custom', icon: '🎯' }
+                  ].map(opt => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => handleStartModeChange(opt.id)}
+                      className={`py-2 px-1 rounded-xl text-xs font-medium border text-center transition-all ${
+                        startMode === opt.id
+                          ? 'bg-indigo-600/30 border-indigo-500 text-indigo-200 font-bold'
+                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                      }`}
+                    >
+                      <span className="block text-sm mb-0.5">{opt.icon}</span>
+                      <span>{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
 
-              <div className="pt-4 border-t border-slate-800/80 space-y-3">
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    setStartMode('custom');
+                  }}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
+                />
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Start Date: <strong className="text-indigo-300">{new Date(startDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</strong>
+                </p>
+              </div>
+
+              {/* Target Deadline */}
+              <div className="pt-3 border-t border-slate-800/80">
+                <label className="block text-xs font-semibold text-slate-200 mb-1.5">Target Completion Deadline</label>
+                <input
+                  type="date"
+                  value={deadline}
+                  onChange={(e) => setDeadline(e.target.value)}
+                  min={startDate}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
+                />
+                <p className="text-[11px] text-slate-500 mt-1">
+                  The scheduler packs all topics between start date and this cutoff.
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-slate-800/80 space-y-2">
                 <label className="block text-xs font-semibold text-slate-300">Preferred Daily Study Window</label>
                 <div className="grid grid-cols-3 gap-2">
                   {['Morning', 'Afternoon', 'Evening'].map((slot) => (

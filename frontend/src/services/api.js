@@ -4,7 +4,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: 120000, // 2 minutes for AI extraction and plan scheduling
 });
 
 api.interceptors.request.use((config) => {
@@ -71,24 +71,24 @@ export const syllabusService = {
   extractFile: async (file) => {
     const formData = new FormData();
     formData.append('file', file);
-    const res = await api.post('/syllabus/extract-file', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    const res = await api.post('/syllabus/extract-file', formData);
     return res.data;
   }
 };
 
 export const planService = {
-  generatePlan: async (goalId, startDate) => {
-    const res = await api.post('/plans/generate', { goalId, startDate });
+  generatePlan: async (goalId, startDate, blackoutDates = []) => {
+    const res = await api.post('/plans/generate', { goalId, startDate, blackoutDates });
     return res.data;
   },
   getPlanByGoal: async (goalId) => {
     const res = await api.get(`/plans/goal/${goalId}`);
     return res.data;
   },
-  reschedulePlan: async (planId, today) => {
-    const res = await api.post(`/plans/${planId}/reschedule`, { today });
+  reschedulePlan: async (planId, options = {}) => {
+    // options can be a string (today date) or an object { today, reason, blackoutDates, missedTaskIds, adjustedDailyHoursIncrease }
+    const payload = typeof options === 'string' ? { today: options } : options;
+    const res = await api.post(`/plans/${planId}/reschedule`, payload);
     return res.data;
   },
   simulateWhatIf: async (planId, payload) => {

@@ -51,34 +51,55 @@ class DeterministicPlanner:
             self.constraints.start_date, self.constraints.deadline
         )
         daily_capacity = ConstraintManager.calculate_available_minutes_per_day(
-            calendar_days, self.availability
+            calendar_days, self.availability, getattr(self.constraints, 'blackout_dates', [])
         )
         study_days, buffer_days = ConstraintManager.partition_buffer_days(
             calendar_days, self.constraints.buffer_days, daily_capacity
         )
 
+        total_req_minutes = sum(t.base_estimated_minutes for t in self.topics)
+        total_study_capacity = sum(daily_capacity.get(d, 0) for d in study_days)
+        total_all_capacity = sum(daily_capacity.get(d, 0) for d in calendar_days)
+        
         # 4. Feasibility validation
         is_feasible, val_warnings = ScheduleValidator.validate_plan_inputs(
             self.topics, self.availability, self.constraints, daily_capacity, study_days
         )
 
+        pace_suggestions = []
+        if total_req_minutes > total_study_capacity:
+            active_study_day_count = max(1, len([d for d in study_days if daily_capacity.get(d, 0) > 0]))
+            needed_daily_mins = total_req_minutes / active_study_day_count
+            current_avg_mins = (total_study_capacity / active_study_day_count) if active_study_day_count > 0 else 0
+            additional_mins = max(0, int(needed_daily_mins - current_avg_mins))
+            pace_suggestions.append(
+                f"Workload suggestion: To meet your deadline comfortably, increase your study time by ~{additional_mins} mins/day (target: {needed_daily_mins/60.0:.1f} hrs/day)."
+            )
+
         if not is_feasible:
             # If not feasible in study days alone, check if usable with buffer days
-            total_with_buffer = sum(daily_capacity.get(d, 0) for d in calendar_days)
-            total_req = sum(t.base_estimated_minutes for t in self.topics)
-            if total_req <= total_with_buffer:
+            if total_req_minutes <= total_all_capacity:
                 # Emergency fallback: borrow from buffer days
                 study_days = [d for d in calendar_days if daily_capacity.get(d, 0) > 0]
                 buffer_days = []
                 val_warnings.append("Note: Schedule required utilizing reserved buffer days to meet the deadline.")
             else:
+                active_days = max(1, len([d for d in calendar_days if daily_capacity.get(d, 0) > 0]))
+                req_daily_hrs = round((total_req_minutes / active_days) / 60.0, 1)
                 return ScheduleResult(
                     is_feasible=False,
                     total_allocated_minutes=0,
                     total_study_days=len(study_days),
                     buffer_dates=[d.isoformat() for d in buffer_days],
                     tasks=[],
-                    warnings=val_warnings
+                    warnings=val_warnings + [
+                        f"Current schedule requires {total_req_minutes/60.0:.1f}h of study across {active_days} days. Increase your daily availability to at least {req_daily_hrs}h/day to fit all topics before deadline."
+                    ],
+                    suggestions=pace_suggestions,
+                    stats={
+                        "required_daily_hours": req_daily_hrs,
+                        "total_required_hours": round(total_req_minutes / 60.0, 1)
+                    }
                 )
 
         # 5. Dependency-aware Task Scheduling

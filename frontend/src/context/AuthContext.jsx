@@ -16,17 +16,9 @@ export const AuthProvider = ({ children }) => {
         setUser(JSON.parse(savedUser));
       } catch (e) {
         localStorage.removeItem('study_user');
+        localStorage.removeItem('study_token');
+        setUser(null);
       }
-    } else {
-      // Initialize with a default local demo user profile for frictionless exploration
-      const defaultUser = {
-        id: "demo-user-1",
-        email: "student@aistudyplanner.local",
-        fullName: "Alex Rivera",
-      };
-      localStorage.setItem('study_user', JSON.stringify(defaultUser));
-      localStorage.setItem('study_token', 'demo_token_development');
-      setUser(defaultUser);
     }
     setLoading(false);
   }, []);
@@ -55,14 +47,27 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginAsDemo = () => {
+    const defaultUser = {
+      id: "demo-user-1",
+      email: "alex.rivera@aistudyplanner.local",
+      fullName: "Alex Rivera",
+    };
+    localStorage.setItem('study_user', JSON.stringify(defaultUser));
+    localStorage.setItem('study_token', 'demo_token_development');
+    setUser(defaultUser);
+  };
+
   const logout = () => {
     localStorage.removeItem('study_token');
     localStorage.removeItem('study_user');
     setUser(null);
   };
 
+  const isDemoUser = user?.id === 'demo-user-1' || user?.email?.endsWith('@aistudyplanner.local');
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, loginAsDemo, logout, isDemoUser }}>
       {children}
     </AuthContext.Provider>
   );
