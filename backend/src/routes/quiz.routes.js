@@ -42,8 +42,20 @@ router.post('/generate/:topicId', authenticate, async (req, res) => {
 
     res.status(201).json(savedQuiz);
   } catch (err) {
-    console.error('Quiz generation error:', err.response?.data || err.message);
-    const msg = err.response?.data?.detail || 'Failed to generate quiz';
+    const errorDetail = err.response?.data?.detail || err.response?.data?.error;
+    const isConnRefused = err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND' || (!err.response && err.message?.includes('Network Error'));
+
+    console.error('Quiz generation error:', {
+      message: err.message,
+      code: err.code,
+      aiServiceUrl: AI_SERVICE_URL,
+      response: err.response?.data
+    });
+
+    const msg = isConnRefused
+      ? `AI Quiz Service is unreachable at (${AI_SERVICE_URL}). Please verify that the ai-service is deployed and AI_SERVICE_URL is set in Render environment variables.`
+      : (errorDetail || err.message || 'Failed to generate quiz');
+
     res.status(500).json({ error: msg });
   }
 });

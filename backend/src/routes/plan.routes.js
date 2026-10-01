@@ -132,8 +132,20 @@ router.post('/generate', authenticate, async (req, res) => {
       stats: planResult.stats
     });
   } catch (err) {
-    console.error('Plan generation error:', err.response?.data || err.message);
-    const msg = err.response?.data?.detail || 'Failed to generate study schedule';
+    const errorDetail = err.response?.data?.detail || err.response?.data?.error;
+    const isConnRefused = err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND' || (!err.response && err.message?.includes('Network Error'));
+    
+    console.error('Plan generation error:', {
+      message: err.message,
+      code: err.code,
+      aiServiceUrl: AI_SERVICE_URL,
+      response: err.response?.data
+    });
+
+    const msg = isConnRefused
+      ? `AI Planning Service is unreachable at (${AI_SERVICE_URL}). Please verify that the ai-service is deployed and AI_SERVICE_URL is set in Render environment variables.`
+      : (errorDetail || err.message || 'Failed to generate study schedule');
+
     res.status(500).json({ error: msg });
   }
 });
@@ -320,8 +332,20 @@ router.post('/:id/reschedule', authenticate, async (req, res) => {
       suggestions: newResult.suggestions || []
     });
   } catch (err) {
-    console.error('Reschedule error:', err.response?.data || err.message);
-    const msg = err.response?.data?.detail || 'Failed to reschedule study plan';
+    const errorDetail = err.response?.data?.detail || err.response?.data?.error;
+    const isConnRefused = err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND' || (!err.response && err.message?.includes('Network Error'));
+    
+    console.error('Reschedule error:', {
+      message: err.message,
+      code: err.code,
+      aiServiceUrl: AI_SERVICE_URL,
+      response: err.response?.data
+    });
+
+    const msg = isConnRefused
+      ? `AI Planning Service is unreachable at (${AI_SERVICE_URL}). Please verify that the ai-service is deployed and AI_SERVICE_URL is set in Render environment variables.`
+      : (errorDetail || err.message || 'Failed to reschedule study plan');
+
     res.status(500).json({ error: msg });
   }
 });
@@ -378,8 +402,20 @@ router.post('/:id/what-if', authenticate, async (req, res) => {
     const aiResponse = await axios.post(`${AI_SERVICE_URL}/schedule/what-if`, whatIfPayload);
     res.json(aiResponse.data);
   } catch (err) {
-    console.error('What-If simulation error:', err.response?.data || err.message);
-    const msg = err.response?.data?.detail || 'Failed to execute what-if simulation';
+    const errorDetail = err.response?.data?.detail || err.response?.data?.error;
+    const isConnRefused = err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND' || (!err.response && err.message?.includes('Network Error'));
+    
+    console.error('What-If simulation error:', {
+      message: err.message,
+      code: err.code,
+      aiServiceUrl: AI_SERVICE_URL,
+      response: err.response?.data
+    });
+
+    const msg = isConnRefused
+      ? `AI Planning Service is unreachable at (${AI_SERVICE_URL}). Please verify that the ai-service is deployed and AI_SERVICE_URL is set in Render environment variables.`
+      : (errorDetail || err.message || 'Failed to execute what-if simulation');
+
     res.status(500).json({ error: msg });
   }
 });

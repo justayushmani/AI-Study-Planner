@@ -28,8 +28,20 @@ router.post('/extract-file', authenticate, upload.single('file'), async (req, re
 
     res.json(aiResponse.data);
   } catch (err) {
-    console.error('File extraction error:', err.response?.data || err.message);
-    const msg = err.response?.data?.detail || 'Failed to extract syllabus from file';
+    const errorDetail = err.response?.data?.detail || err.response?.data?.error;
+    const isConnRefused = err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND' || (!err.response && err.message?.includes('Network Error'));
+
+    console.error('File extraction error:', {
+      message: err.message,
+      code: err.code,
+      aiServiceUrl: AI_SERVICE_URL,
+      response: err.response?.data
+    });
+
+    const msg = isConnRefused
+      ? `AI Syllabus Service is unreachable at (${AI_SERVICE_URL}). Please verify that the ai-service is deployed and AI_SERVICE_URL is set in Render environment variables.`
+      : (errorDetail || err.message || 'Failed to extract syllabus from file');
+
     res.status(500).json({ error: msg });
   }
 });
@@ -50,8 +62,20 @@ router.post('/extract-text', authenticate, async (req, res) => {
 
     res.json(aiResponse.data);
   } catch (err) {
-    console.error('Text extraction error:', err.response?.data || err.message);
-    const msg = err.response?.data?.detail || 'Failed to extract topics from text';
+    const errorDetail = err.response?.data?.detail || err.response?.data?.error;
+    const isConnRefused = err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND' || (!err.response && err.message?.includes('Network Error'));
+
+    console.error('Text extraction error:', {
+      message: err.message,
+      code: err.code,
+      aiServiceUrl: AI_SERVICE_URL,
+      response: err.response?.data
+    });
+
+    const msg = isConnRefused
+      ? `AI Syllabus Service is unreachable at (${AI_SERVICE_URL}). Please verify that the ai-service is deployed and AI_SERVICE_URL is set in Render environment variables.`
+      : (errorDetail || err.message || 'Failed to extract topics from text');
+
     res.status(500).json({ error: msg });
   }
 });
