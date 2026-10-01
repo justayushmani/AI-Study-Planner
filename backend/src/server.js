@@ -38,7 +38,16 @@ app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Health Check
+// Health Check Endpoints
+app.get('/', (req, res) => {
+  res.json({
+    status: 'healthy',
+    service: 'ai-study-planner-backend',
+    message: 'AI Study Planner Backend is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
@@ -47,15 +56,20 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/goals', goalRoutes);
-app.use('/api/syllabus', syllabusRoutes);
-app.use('/api/plans', planRoutes);
-app.use('/api/tasks', taskRoutes);
-app.use('/api/quizzes', quizRoutes);
-app.use('/api/assistant', assistantRoutes);
-app.use('/api/stats', statsRoutes);
+// API Routes (Mounted under /api and dual-mounted at root for resilience)
+const mountRoutes = (prefix = '') => {
+  app.use(`${prefix}/auth`, authRoutes);
+  app.use(`${prefix}/goals`, goalRoutes);
+  app.use(`${prefix}/syllabus`, syllabusRoutes);
+  app.use(`${prefix}/plans`, planRoutes);
+  app.use(`${prefix}/tasks`, taskRoutes);
+  app.use(`${prefix}/quizzes`, quizRoutes);
+  app.use(`${prefix}/assistant`, assistantRoutes);
+  app.use(`${prefix}/stats`, statsRoutes);
+};
+
+mountRoutes('/api');
+mountRoutes('');
 
 // Global Error Handler
 app.use((err, req, res, next) => {
