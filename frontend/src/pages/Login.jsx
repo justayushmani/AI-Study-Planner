@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Sparkles, Mail, Lock, ArrowRight, ShieldCheck, Zap, Calendar, UserCheck } from 'lucide-react';
+import { Sparkles, Mail, Lock, ArrowRight, ShieldCheck, Zap, CalendarDays, UserCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
@@ -35,94 +35,92 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 relative overflow-hidden">
+    <div className="min-h-[calc(100vh-3.5rem)] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-10 relative overflow-hidden">
       {/* Background ambient lighting */}
-      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/4 -left-20 w-80 h-80 bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
         
         {/* Left Value Showcase */}
-        <div className="lg:col-span-6 space-y-6 text-left hidden lg:block pr-6">
-          <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold">
+        <div className="lg:col-span-6 space-y-5 text-left hidden lg:block pr-4">
+          <div className="inline-flex items-center space-x-2 px-2.5 py-1 rounded bg-[#7C3AED]/15 border border-[#7C3AED]/30 text-violet-300 text-[11px] font-mono font-semibold">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>AI Adaptive Study Engine</span>
+            <span>AI ADAPTIVE STUDY OS</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
-            Master Any Syllabus With <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400">Intelligent Scheduling</span>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-tight">
+            Master Any Syllabus With <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-400 via-purple-300 to-cyan-400">Intelligent Scheduling</span>
           </h1>
-          <p className="text-slate-400 text-sm leading-relaxed">
+          <p className="text-slate-400 text-xs leading-relaxed">
             Your personal AI study planner that adapts dynamically to your real life—rebalancing missed days, vacation leaves, and study velocity automatically.
           </p>
 
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center space-x-3 text-xs text-slate-300">
-              <div className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
-                <ShieldCheck className="w-3.5 h-3.5" />
+          <div className="space-y-2.5 pt-1 font-mono text-xs">
+            <div className="flex items-center space-x-3 text-slate-300 p-2.5 rounded-lg bg-[#080B10] border border-[#1A2330]">
+              <div className="w-5 h-5 rounded bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-violet-400">
+                <ShieldCheck className="w-3 h-3" />
               </div>
-              <span>Unique schedule & private data isolation for each user</span>
+              <span className="text-[11px]">Private schedule & data isolation for each user</span>
             </div>
-            <div className="flex items-center space-x-3 text-xs text-slate-300">
-              <div className="w-6 h-6 rounded-lg bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
-                <Calendar className="w-3.5 h-3.5" />
+            <div className="flex items-center space-x-3 text-slate-300 p-2.5 rounded-lg bg-[#080B10] border border-[#1A2330]">
+              <div className="w-5 h-5 rounded bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                <CalendarDays className="w-3 h-3" />
               </div>
-              <span>Vacation-aware rescheduling & study pace suggestions</span>
+              <span className="text-[11px]">Vacation-aware rescheduling & study pace booster</span>
             </div>
-            <div className="flex items-center space-x-3 text-xs text-slate-300">
-              <div className="w-6 h-6 rounded-lg bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-pink-400">
-                <Zap className="w-3.5 h-3.5" />
+            <div className="flex items-center space-x-3 text-slate-300 p-2.5 rounded-lg bg-[#080B10] border border-[#1A2330]">
+              <div className="w-5 h-5 rounded bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <Zap className="w-3 h-3" />
               </div>
-              <span>Real-time streak tracking & spaced repetition quizzes</span>
+              <span className="text-[11px]">Real streak telemetry & spaced repetition quizzes</span>
             </div>
           </div>
         </div>
 
         {/* Right Auth Card */}
         <div className="lg:col-span-6">
-          <div className="bg-slate-900/80 border border-slate-800 backdrop-blur-xl rounded-3xl p-8 shadow-2xl shadow-black/40">
-            <div className="mb-6 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 p-0.5 mx-auto mb-3 shadow-lg shadow-indigo-500/30">
-                <div className="w-full h-full bg-[#090d16] rounded-[14px] flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-indigo-400" />
-                </div>
+          <div className="bg-[#080B10] border border-[#1A2330] rounded-xl p-6 sm:p-8 shadow-2xl">
+            <div className="mb-5 text-center">
+              <div className="w-9 h-9 rounded-lg bg-[#7C3AED]/15 border border-[#7C3AED]/30 mx-auto mb-2.5 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-violet-400" />
               </div>
-              <h2 className="text-xl font-bold text-white tracking-tight">Welcome Back</h2>
-              <p className="text-xs text-slate-400 mt-1">Sign in to resume your study journey</p>
+              <h2 className="text-lg font-bold text-white tracking-tight font-mono">AUTHENTICATION</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Sign in to resume your study journey</p>
             </div>
 
             {error && (
-              <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs text-center font-medium animate-shake">
+              <div className="mb-4 p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs text-center font-mono">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Email Address</label>
+                <label className="block text-[11px] font-mono text-slate-400 mb-1">EMAIL ADDRESS</label>
                 <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Mail className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@domain.com"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-slate-100 placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                    className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#030508] border border-[#1A2330] text-slate-100 placeholder-slate-600 text-xs font-mono focus:outline-none focus:border-violet-500 transition-colors"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Password</label>
+                <label className="block text-[11px] font-mono text-slate-400 mb-1">PASSWORD</label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Lock className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-slate-100 placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                    className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#030508] border border-[#1A2330] text-slate-100 placeholder-slate-600 text-xs font-mono focus:outline-none focus:border-violet-500 transition-colors"
                   />
                 </div>
               </div>
@@ -130,18 +128,18 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center space-x-2 disabled:opacity-60"
+                className="w-full py-2 rounded-lg bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold font-mono shadow-[0_0_15px_rgba(124,58,237,0.25)] transition-all flex items-center justify-center space-x-1.5 disabled:opacity-60 mt-1"
               >
-                <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
-                <ArrowRight className="w-4 h-4" />
+                <span>{loading ? 'AUTHENTICATING...' : 'SIGN IN'}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </form>
 
-            <div className="relative my-6 text-center">
+            <div className="relative my-4 text-center">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-800" />
+                <div className="w-full border-t border-[#1A2330]" />
               </div>
-              <span className="relative px-3 bg-slate-900 text-[11px] text-slate-500 uppercase tracking-wider font-semibold">
+              <span className="relative px-2 bg-[#080B10] text-[10px] text-slate-600 uppercase tracking-widest font-mono">
                 Or quick exploration
               </span>
             </div>
@@ -149,15 +147,15 @@ export default function Login() {
             <button
               onClick={handleDemoLogin}
               type="button"
-              className="w-full py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/60 text-xs font-semibold transition-colors flex items-center justify-center space-x-2"
+              className="w-full py-2 rounded-lg bg-[#0D121A] hover:bg-[#101620] text-slate-300 hover:text-white border border-[#1A2330] hover:border-[#26354A] text-xs font-mono font-semibold transition-colors flex items-center justify-center space-x-1.5"
             >
-              <UserCheck className="w-4 h-4 text-indigo-400" />
+              <UserCheck className="w-3.5 h-3.5 text-violet-400" />
               <span>Continue with Instant Demo Mode</span>
             </button>
 
-            <p className="text-center text-xs text-slate-400 mt-6">
+            <p className="text-center text-xs text-slate-500 mt-4">
               Don't have an account?{' '}
-              <Link to="/register" className="text-indigo-400 hover:text-indigo-300 font-semibold transition-colors">
+              <Link to="/register" className="text-violet-400 hover:text-violet-300 font-semibold transition-colors">
                 Create an account
               </Link>
             </p>

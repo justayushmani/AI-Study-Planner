@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Bot, User, Sparkles, AlertCircle, RefreshCw } from 'lucide-react';
+import { X, Send, Bot, User, Sparkles, Terminal, Cpu, RefreshCw, ChevronRight } from 'lucide-react';
 import { assistantService } from '../services/api';
 
 export default function AIAssistantModal({ isOpen, onClose, currentGoalId, goalTitle }) {
@@ -58,35 +58,36 @@ export default function AIAssistantModal({ isOpen, onClose, currentGoalId, goalT
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-2xl h-[650px] bg-[#0d121f] border border-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+      <div className="relative w-full max-w-2xl h-[650px] bg-[#080B10] border border-[#1A2330] rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden">
         
         {/* Header */}
-        <div className="px-5 py-4 border-b border-slate-800 bg-[#090d16] flex items-center justify-between">
+        <div className="px-5 py-3.5 border-b border-[#1A2330] bg-[#030508] flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="h-8 w-8 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
-              <Bot className="w-5 h-5 text-indigo-400" />
+            <div className="h-8 w-8 rounded-lg bg-[#0D121A] border border-purple-500/40 flex items-center justify-center text-purple-400 shadow-[0_0_10px_rgba(124,58,237,0.3)]">
+              <Bot className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h3 className="font-semibold text-slate-100 text-sm">AI Study Coach</h3>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono">
-                  Groq LLM Active
+                <h3 className="font-bold text-slate-100 text-sm">AI Study Coach Terminal</h3>
+                <span className="text-[10px] px-2 py-0.5 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-mono flex items-center space-x-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" />
+                  <span>GROQ LLM ACTIVE</span>
                 </span>
               </div>
-              <p className="text-xs text-slate-400">Contextual pedagogical mentor & schedule analyzer</p>
+              <p className="text-[11px] font-mono text-slate-500">CONTEXTUAL PEDAGOGICAL MENTOR & SCHEDULE ANALYZER</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-[#0D121A] border border-transparent hover:border-[#1A2330] transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+        <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-[#05070B]">
           {messages.map((m, idx) => (
             <div
               key={idx}
@@ -97,18 +98,18 @@ export default function AIAssistantModal({ isOpen, onClose, currentGoalId, goalT
               <div
                 className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-semibold ${
                   m.role === 'user'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-indigo-600/30 border border-indigo-500/30 text-indigo-300'
+                    ? 'bg-[#7C3AED] text-white shadow-[0_0_10px_rgba(124,58,237,0.4)]'
+                    : 'bg-[#0D121A] border border-cyan-500/30 text-cyan-400'
                 }`}
               >
-                {m.role === 'user' ? <User className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
+                {m.role === 'user' ? <User className="w-3.5 h-3.5" /> : <Cpu className="w-3.5 h-3.5" />}
               </div>
 
               <div
-                className={`max-w-[80%] rounded-xl px-4 py-3 text-xs sm:text-sm leading-relaxed ${
+                className={`max-w-[85%] rounded-lg px-4 py-3 text-xs sm:text-sm leading-relaxed ${
                   m.role === 'user'
-                    ? 'bg-indigo-600 text-white rounded-tr-none shadow-md shadow-indigo-600/20'
-                    : 'bg-slate-900 border border-slate-800/80 text-slate-200 rounded-tl-none whitespace-pre-wrap'
+                    ? 'bg-[#0D121A] border border-purple-500/40 text-slate-100 rounded-tr-none shadow-sm'
+                    : 'bg-[#080B10] border border-[#1A2330] text-slate-200 rounded-tl-none whitespace-pre-wrap font-sans'
                 }`}
               >
                 {m.content}
@@ -118,23 +119,24 @@ export default function AIAssistantModal({ isOpen, onClose, currentGoalId, goalT
 
           {loading && (
             <div className="flex items-center space-x-3 text-slate-400 text-xs py-2">
-              <div className="w-7 h-7 rounded-lg bg-indigo-600/30 border border-indigo-500/30 flex items-center justify-center">
-                <RefreshCw className="w-3.5 h-3.5 text-indigo-400 animate-spin" />
+              <div className="w-7 h-7 rounded-lg bg-[#0D121A] border border-[#1A2330] flex items-center justify-center">
+                <RefreshCw className="w-3.5 h-3.5 text-purple-400 animate-spin" />
               </div>
-              <span>Coach is analyzing syllabus context and formulating response...</span>
+              <span className="font-mono text-[11px] text-slate-400">Coach is analyzing syllabus context and formulating response...</span>
             </div>
           )}
           <div ref={messagesEndRef} />
         </div>
 
         {/* Quick Prompts */}
-        <div className="px-5 py-2 border-t border-slate-800/60 bg-[#090d16]/70 flex items-center space-x-2 overflow-x-auto no-scrollbar">
-          <Sparkles className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+        <div className="px-5 py-2.5 border-t border-[#1A2330] bg-[#030508] flex items-center space-x-2 overflow-x-auto no-scrollbar">
+          <Terminal className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+          <span className="text-[10px] font-mono text-slate-500 uppercase flex-shrink-0">PROMPTS:</span>
           {quickPrompts.map((prompt, i) => (
             <button
               key={i}
               onClick={() => handleSend(prompt)}
-              className="text-[11px] whitespace-nowrap px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-slate-100 border border-slate-700/60 transition-colors"
+              className="text-[11px] font-mono whitespace-nowrap px-2.5 py-1 rounded border border-[#1A2330] bg-[#080B10] hover:bg-[#0D121A] hover:border-purple-500/40 text-slate-400 hover:text-purple-300 transition-colors"
             >
               {prompt}
             </button>
@@ -142,7 +144,7 @@ export default function AIAssistantModal({ isOpen, onClose, currentGoalId, goalT
         </div>
 
         {/* Input bar */}
-        <div className="p-4 border-t border-slate-800 bg-[#090d16]">
+        <div className="p-3.5 border-t border-[#1A2330] bg-[#080B10]">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -155,14 +157,14 @@ export default function AIAssistantModal({ isOpen, onClose, currentGoalId, goalT
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask anything about your study plan, difficult topics, or theory..."
-              className="flex-1 bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+              className="flex-1 bg-[#0D121A] border border-[#1A2330] rounded-lg px-4 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-purple-500/60 focus:ring-1 focus:ring-purple-500/40 transition-colors"
             />
             <button
               type="submit"
               disabled={loading || !input.trim()}
-              className="p-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white shadow-md shadow-indigo-600/25 transition-all"
+              className="px-4 py-2.5 rounded-lg bg-[#7C3AED] hover:bg-[#8B5CF6] disabled:opacity-40 text-white text-xs font-semibold shadow-[0_0_15px_rgba(124,58,237,0.3)] transition-all flex items-center space-x-1.5"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-3.5 h-3.5" />
             </button>
           </form>
         </div>

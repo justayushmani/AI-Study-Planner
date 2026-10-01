@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Sparkles, 
-  Calendar, 
-  Sliders, 
+  CalendarDays, 
+  SlidersHorizontal, 
   FileUp, 
-  PlusCircle, 
+  Plus, 
   Flame, 
   Bot, 
   LayoutDashboard,
@@ -13,8 +13,8 @@ import {
   User,
   LogIn,
   UserPlus,
-  ShieldCheck,
-  ChevronDown
+  ChevronDown,
+  Activity
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { statsService } from '../services/api';
@@ -58,36 +58,33 @@ export default function Navbar({ onOpenAssistant }) {
 
   const navLinks = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
-    { name: 'Study Schedule', path: '/schedule', icon: Calendar },
-    { name: 'What-If Sandbox', path: '/what-if', icon: Sliders },
+    { name: 'Schedule', path: '/schedule', icon: CalendarDays },
+    { name: 'What-If Sandbox', path: '/what-if', icon: SlidersHorizontal },
     { name: 'Syllabus Extractor', path: '/syllabus', icon: FileUp },
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-[#090d16]/90 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <header className="sticky top-0 z-40 w-full border-b border-[#1A2330] bg-[#030508]/90 backdrop-blur-md">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
         
         {/* Brand */}
         <div className="flex items-center space-x-6">
-          <Link to="/" className="flex items-center space-x-3 group">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 p-0.5 shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-              <div className="w-full h-full bg-[#090d16] rounded-[10px] flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-indigo-400 group-hover:text-indigo-300 transition-colors" />
-              </div>
+          <Link to="/" className="flex items-center space-x-2.5 group">
+            <div className="h-8 w-8 rounded-lg bg-[#080B10] border border-[#1A2330] group-hover:border-[#7C3AED]/60 flex items-center justify-center transition-all shadow-[0_0_10px_rgba(124,58,237,0.1)]">
+              <Sparkles className="w-4 h-4 text-violet-400 group-hover:text-cyan-300 transition-colors" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-bold text-base text-slate-100 tracking-tight">AI Study Planner</span>
-                <span className="text-[10px] uppercase font-semibold tracking-wider px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                  Adaptive
+                <span className="font-bold text-xs sm:text-sm text-slate-100 tracking-tight font-mono">AI STUDY PLANNER</span>
+                <span className="text-[9px] uppercase font-bold tracking-widest px-1.5 py-0.2 rounded bg-[#7C3AED]/15 text-violet-300 border border-[#7C3AED]/30 font-mono">
+                  OS-1
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-medium">Deterministic Engine + Groq</p>
             </div>
           </Link>
 
           {/* Navigation Links */}
-          <nav className="hidden md:flex items-center space-x-1 pl-4 border-l border-slate-800">
+          <nav className="hidden md:flex items-center space-x-1 pl-4 border-l border-[#1A2330]">
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive = location.pathname === link.path;
@@ -97,11 +94,11 @@ export default function Navbar({ onOpenAssistant }) {
                   to={link.path}
                   className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     isActive
-                      ? 'bg-slate-800 text-indigo-400 font-semibold shadow-inner'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                      ? 'bg-[#7C3AED]/15 border border-[#7C3AED]/40 text-violet-200 font-semibold shadow-[0_0_12px_rgba(124,58,237,0.15)]'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-[#0D121A] hover:border hover:border-[#1A2330] border border-transparent'
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-indigo-400' : 'text-slate-400'}`} />
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-violet-400' : 'text-slate-500'}`} />
                   <span>{link.name}</span>
                 </Link>
               );
@@ -110,38 +107,38 @@ export default function Navbar({ onOpenAssistant }) {
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2.5">
           
           {/* Real Streak Indicator */}
           {user && (
             <div 
               title={isCompletedToday ? "Streak protected! You completed study tasks today." : "Complete today's task to keep your streak alive!"}
-              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold transition-all ${
+              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-mono font-semibold transition-all ${
                 streakDays > 0 
-                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 shadow-sm shadow-amber-500/10'
-                  : 'bg-slate-800/60 border-slate-700/60 text-slate-400'
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.1)]'
+                  : 'bg-[#080B10] border-[#1A2330] text-slate-500'
               }`}
             >
-              <Flame className={`w-3.5 h-3.5 ${streakDays > 0 ? 'fill-amber-400 text-amber-400 animate-pulse' : 'text-slate-500'}`} />
-              <span>{streakDays} Day Streak</span>
+              <Flame className={`w-3.5 h-3.5 ${streakDays > 0 ? 'fill-amber-400 text-amber-400 animate-pulse' : 'text-slate-600'}`} />
+              <span>{streakDays}D STREAK</span>
             </div>
           )}
 
           {/* AI Coach Button */}
           <button
             onClick={onOpenAssistant}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-600/30 text-xs font-medium transition-colors"
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#080B10] hover:bg-[#0D121A] border border-[#1A2330] hover:border-cyan-500/40 text-slate-300 hover:text-cyan-300 text-xs font-medium transition-all"
           >
-            <Bot className="w-4 h-4 text-indigo-400" />
-            <span className="hidden sm:inline">AI Study Coach</span>
+            <Bot className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden sm:inline">AI Coach</span>
           </button>
 
           {/* New Goal Button */}
           <Link
             to="/onboarding"
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/25 transition-all"
+            className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-semibold shadow-[0_0_15px_rgba(124,58,237,0.3)] transition-all"
           >
-            <PlusCircle className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span className="hidden sm:inline">New Goal</span>
           </Link>
 
@@ -150,28 +147,28 @@ export default function Navbar({ onOpenAssistant }) {
             <div className="relative">
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center space-x-2 pl-2 pr-2.5 py-1 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs transition-colors"
+                className="flex items-center space-x-2 pl-1.5 pr-2 py-1 rounded-lg bg-[#080B10] hover:bg-[#0D121A] border border-[#1A2330] hover:border-[#26354A] text-slate-200 text-xs transition-colors"
               >
-                <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white text-[11px] font-bold">
+                <div className="w-5 h-5 rounded bg-[#7C3AED]/20 border border-[#7C3AED]/40 flex items-center justify-center text-violet-300 text-[10px] font-mono font-bold">
                   {user.fullName ? user.fullName[0].toUpperCase() : 'U'}
                 </div>
-                <span className="max-w-[100px] truncate font-medium hidden md:inline">
+                <span className="max-w-[90px] truncate font-medium text-[11px] hidden md:inline">
                   {user.fullName || 'User'}
                 </span>
-                <ChevronDown className="w-3 h-3 text-slate-400" />
+                <ChevronDown className="w-3 h-3 text-slate-500" />
               </button>
 
               {/* Dropdown menu */}
               {isUserMenuOpen && (
                 <div 
-                  className="absolute right-0 mt-2 w-56 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl shadow-black/50 py-2 z-50 animate-fadeIn"
+                  className="absolute right-0 mt-2 w-56 rounded-xl bg-[#080B10] border border-[#1A2330] shadow-2xl py-1.5 z-50 animate-scaleUp"
                   onMouseLeave={() => setIsUserMenuOpen(false)}
                 >
-                  <div className="px-3.5 py-2 border-b border-slate-800">
+                  <div className="px-3.5 py-2 border-b border-[#1A2330]">
                     <p className="text-xs font-semibold text-white truncate">{user.fullName || 'User'}</p>
-                    <p className="text-[11px] text-slate-400 truncate">{user.email}</p>
+                    <p className="text-[11px] text-slate-500 font-mono truncate">{user.email}</p>
                     {isDemoUser && (
-                      <span className="inline-block mt-1 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                      <span className="inline-block mt-1 text-[9px] uppercase font-mono font-bold px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
                         Demo Mode Active
                       </span>
                     )}
@@ -180,22 +177,22 @@ export default function Navbar({ onOpenAssistant }) {
                   <Link
                     to="/onboarding"
                     onClick={() => setIsUserMenuOpen(false)}
-                    className="flex items-center space-x-2 px-3.5 py-2 text-xs text-slate-300 hover:text-white hover:bg-slate-800/70 transition-colors"
+                    className="flex items-center space-x-2 px-3.5 py-2 text-xs text-slate-300 hover:text-white hover:bg-[#0D121A] transition-colors"
                   >
-                    <PlusCircle className="w-3.5 h-3.5 text-indigo-400" />
-                    <span>Create New Study Goal</span>
+                    <Plus className="w-3.5 h-3.5 text-violet-400" />
+                    <span>Create New Goal</span>
                   </Link>
 
                   <Link
                     to="/schedule"
                     onClick={() => setIsUserMenuOpen(false)}
-                    className="flex items-center space-x-2 px-3.5 py-2 text-xs text-slate-300 hover:text-white hover:bg-slate-800/70 transition-colors"
+                    className="flex items-center space-x-2 px-3.5 py-2 text-xs text-slate-300 hover:text-white hover:bg-[#0D121A] transition-colors"
                   >
-                    <Calendar className="w-3.5 h-3.5 text-purple-400" />
-                    <span>View Full Schedule</span>
+                    <CalendarDays className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>View Schedule</span>
                   </Link>
 
-                  <div className="my-1 border-t border-slate-800" />
+                  <div className="my-1 border-t border-[#1A2330]" />
 
                   <button
                     onClick={handleLogout}
@@ -211,14 +208,14 @@ export default function Navbar({ onOpenAssistant }) {
             <div className="flex items-center space-x-2">
               <Link
                 to="/login"
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors"
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-[#080B10] transition-colors"
               >
-                <LogIn className="w-3.5 h-3.5 text-slate-400" />
+                <LogIn className="w-3.5 h-3.5 text-slate-500" />
                 <span>Sign In</span>
               </Link>
               <Link
                 to="/register"
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 transition-all"
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-semibold shadow-[0_0_12px_rgba(124,58,237,0.3)] transition-all"
               >
                 <UserPlus className="w-3.5 h-3.5" />
                 <span>Register</span>
