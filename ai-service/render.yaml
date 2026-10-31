@@ -1,0 +1,21 @@
+# Render Blueprint for AI Study Planner - AI Service (Python FastAPI)
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: ai-study-planner-ai-service
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.0"
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: openai/gpt-oss-120b
+      - key: BACKEND_URL
+        sync: false

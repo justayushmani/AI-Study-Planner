@@ -16,18 +16,23 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS configuration
-origins = [
+# CORS configuration — read allowed origins from environment for production
+_default_origins = [
     "http://localhost:5173",
     "http://localhost:5000",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:5000",
-    "*"
 ]
+
+# Add production URLs from environment variables if set
+for _env_key in ("BACKEND_URL", "FRONTEND_URL"):
+    _url = os.getenv(_env_key)
+    if _url and _url not in _default_origins:
+        _default_origins.append(_url)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=_default_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

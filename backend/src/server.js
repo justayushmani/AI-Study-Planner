@@ -16,27 +16,33 @@ import statsRoutes from './routes/stats.routes.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
-// Security & Middleware
-app.use((req, res, next) => {
-  const origin = req.headers.origin || '*';
-  res.header('Access-Control-Allow-Origin', origin);
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-dev-user-id, X-Dev-User-Id, *');
-  
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(204);
-  }
-  next();
-});
+// ── CORS Configuration ──────────────────────────────────────────────
+// In production, restrict to the deployed frontend URL.
+// In development, allow any origin for convenience.
+const allowedOrigins = IS_PRODUCTION
+  ? [process.env.FRONTEND_URL].filter(Boolean)
+  : true; // allow all origins in dev
+
 app.use(cors({
-  origin: true,
-  credentials: true
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'x-dev-user-id'],
 }));
-app.use(morgan('dev'));
+
+// ── Logging ──────────────────────────────────────────────────────────
+app.use(morgan(IS_PRODUCTION ? 'combined' : 'dev'));
+
+// ── Body Parsers ─────────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// ── Trust Proxy (Render / reverse-proxy deployments) ─────────────────
+if (IS_PRODUCTION) {
+  app.set('trust proxy', 1);
+}
 
 // Health Check Endpoints
 app.get('/', (req, res) => {
